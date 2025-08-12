@@ -1,0 +1,49 @@
+[gd_scene load_steps=2 format=3 uid="uid://djovg4h1gkmv2"]
+
+[ext_resource type="Script" uid="uid://w427y7lkm8g0" path="res://scripts/ui/choice_button_ui.gd" id="1_u2sgh"]
+
+[node name="ChoiceButton" type="Control"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_u2sgh")
+button_path = NodePath("Button")
+name_label_path = NodePath("Button/VBoxContainer/ChoiceName")
+description_label_path = NodePath("Button/VBoxContainer/ChoiceDescription")
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Button"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ChoiceName" type="Label" parent="Button/VBoxContainer"]
+layout_mode = 2
+text = "选择名称"
+
+[node name="ChoiceDescription" type="Label" parent="Button/VBoxContainer"]
+layout_mode = 2
+text = "选择描述"
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

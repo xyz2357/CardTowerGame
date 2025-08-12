@@ -1,0 +1,50 @@
+[gd_scene load_steps=2 format=3 uid="uid://bbk7v2e0ig7ie"]
+
+[ext_resource type="Script" uid="uid://bgbh8eg81kovh" path="res://scripts/ui/card_ui.gd" id="1_d81rb"]
+
+[node name="Card" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1032.0
+offset_bottom = -488.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_d81rb")
+card_name_label_path = NodePath("CardBackground/VBoxContainer/CardName")
+cost_label_path = NodePath("CardBackground/VBoxContainer/HBoxContainer/Cost")
+description_label_path = NodePath("CardBackground/VBoxContainer/Description")
+card_background_path = NodePath("CardBackground")
+
+[node name="CardBackground" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CardBackground"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CardName" type="Label" parent="CardBackground/VBoxContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CardBackground/VBoxContainer"]
+layout_mode = 2
+
+[node name="Cost" type="Label" parent="CardBackground/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="CardBackground/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Description" type="Label" parent="CardBackground/VBoxContainer"]
+layout_mode = 2
+autowrap_mode = 3

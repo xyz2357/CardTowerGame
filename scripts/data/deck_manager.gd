@@ -1,0 +1,140 @@
+extends RefCounted
+
+# 牌组管理类 - 纯数据和逻辑
+class_name DeckManager
+
+signal hand_changed
+signal deck_changed
+
+var deck: Array[Dictionary] = []
+var hand: Array[Dictionary] = []
+var discard_pile: Array[Dictionary] = []
+var exhaust_pile: Array[Dictionary] = []
+
+func initialize_default_deck():
+	deck = [
+		{"name": "攻击", "cost": 1, "damage": 6, "type": "attack", "id": generate_card_id()},
+		{"name": "攻击", "cost": 1, "damage": 6, "type": "attack", "id": generate_card_id()},
+		{"name": "攻击", "cost": 1, "damage": 6, "type": "attack", "id": generate_card_id()},
+		{"name": "攻击", "cost": 1, "damage": 6, "type": "attack", "id": generate_card_id()},
+		{"name": "防御", "cost": 1, "block": 5, "type": "skill", "id": generate_card_id()},
+		{"name": "防御", "cost": 1, "block": 5, "type": "skill", "id": generate_card_id()},
+		{"name": "防御", "cost": 1, "block": 5, "type": "skill", "id": generate_card_id()},
+		{"name": "重击", "cost": 2, "damage": 12, "type": "attack", "id": generate_card_id()},
+		{"name": "治疗", "cost": 2, "heal": 8, "type": "skill", "id": generate_card_id()},
+		{"name": "能量药水", "cost": 1, "energy": 2, "type": "skill", "id": generate_card_id()}
+	]
+	deck.shuffle()
+	hand.clear()
+	discard_pile.clear()
+	exhaust_pile.clear()
+
+func generate_card_id() -> String:
+	return "card_" + str(Time.get_unix_time_from_system()) + "_" + str(randi())
+
+func draw_starting_hand():
+	for i in range(5):
+		draw_card()
+
+func draw_card() -> bool:
+	if deck.is_empty():
+		shuffle_discard_into_deck()
+	
+	if not deck.is_empty():
+		var card = deck.pop_front()
+		hand.append(card)
+		hand_changed.emit()
+		deck_changed.emit()
+		return true
+	
+	return false
+
+func draw_cards(count: int):
+	for i in range(count):
+		if not draw_card():
+			break
+
+func shuffle_discard_into_deck():
+	if discard_pile.is_empty():
+		return
+	
+	deck.append_array(discard_pile)
+	discard_pile.clear()
+	deck.shuffle()
+	deck_changed.emit()
+
+func play_card(card_data: Dictionary):
+	# 从手牌中移除
+	for i in range(hand.size()):
+		if hand[i].id == card_data.id:
+			hand.remove_at(i)
+			break
+	
+	# 添加到弃牌堆
+	discard_pile.append(card_data)
+	hand_changed.emit()
+	deck_changed.emit()
+
+func discard_card(card_data: Dictionary):
+	# 从手牌中移除并放入弃牌堆
+	for i in range(hand.size()):
+		if hand[i].id == card_data.id:
+			var card = hand[i]
+			hand.remove_at(i)
+			discard_pile.append(card)
+			break
+	
+	hand_changed.emit()
+	deck_changed.emit()
+
+func exhaust_card(card_data: Dictionary):
+	# 从手牌中移除并放入消耗堆（永久移除）
+	for i in range(hand.size()):
+		if hand[i].id == card_data.id:
+			var card = hand[i]
+			hand.remove_at(i)
+			exhaust_pile.append(card)
+			break
+	
+	hand_changed.emit()
+	deck_changed.emit()
+
+func add_card_to_deck(card_data: Dictionary):
+	card_data.id = generate_card_id()
+	deck.append(card_data)
+	deck_changed.emit()
+
+func remove_card_from_deck(card_name: String) -> bool:
+	# 优先从牌库中移除
+	for i in range(deck.size()):
+		if deck[i].name == card_name:
+			deck.remove_at(i)
+			deck_changed.emit()
+			return true
+	
+	# 其次从弃牌堆中移除
+	for i in range(discard_pile.size()):
+		if discard_pile[i].name == card_name:
+			discard_pile.remove_at(i)
+			deck_changed.emit()
+			return true
+	
+	return false
+
+func get_hand_cards() -> Array[Dictionary]:
+	return hand.duplicate()
+
+func get_deck_status() -> Dictionary:
+	return {
+		"deck_size": deck.size(),
+		"hand_size": hand.size(),
+		"discard_size": discard_pile.size(),
+		"exhaust_size": exhaust_pile.size()
+	}
+
+func get_all_cards() -> Array[Dictionary]:
+	var all_cards: Array[Dictionary] = []
+	all_cards.append_array(deck)
+	all_cards.append_array(hand)
+	all_cards.append_array(discard_pile)
+	return all_cards

@@ -1,0 +1,19 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+run/main_scene="uid://bfmfh8sw6kj4k"
+config/features=PackedStringArray("4.4")
+
+[autoload]
+
+SceneManager="*res://scripts/singletons/scene_manager.gd"
+GameData="*res://scripts/singletons/game_data.gd"
