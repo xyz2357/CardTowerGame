@@ -21,20 +21,30 @@ func initialize():
 	# 从游戏数据恢复状态
 	restore_from_game_data()
 	
+	# 使用延迟调用确保所有节点都已初始化
+	call_deferred("delayed_initialization")
+
+func delayed_initialization():
 	# 生成当前楼层的选择
 	generate_current_floor_choices()
 	emit_ui_update()
+	print("Tower controller initialized, floor: ", tower_data.current_floor)
 
 func restore_from_game_data():
 	tower_data.current_floor = GameData.current_floor
 	tower_data.player_hp = GameData.player_hp
 	tower_data.player_max_hp = GameData.player_max_hp
+	print("Restored from game data - Floor: ", tower_data.current_floor)
 
 func generate_current_floor_choices():
 	var choices = choice_generator.generate_choices_for_floor(tower_data.current_floor)
+	print("Generated ", choices.size(), " choices for floor ", tower_data.current_floor)
+	for i in range(choices.size()):
+		print("Choice ", i, ": ", choices[i])
 	choices_update_requested.emit(choices)
 
 func handle_choice_selected(choice_data: Dictionary):
+	print("Choice selected: ", choice_data)
 	match choice_data.type:
 		ChoiceGenerator.ChoiceType.ENEMY, ChoiceGenerator.ChoiceType.ELITE, ChoiceGenerator.ChoiceType.BOSS:
 			start_battle(choice_data)
@@ -51,12 +61,9 @@ func start_battle(enemy_data: Dictionary):
 	battle_requested.emit(enemy_data)
 
 func handle_rest_choice():
-	var rest_options = [
-		{"type": "heal", "name": "恢复生命", "description": "恢复30%最大生命值"},
-		{"type": "upgrade", "name": "升级卡牌", "description": "选择一张卡牌进行升级"}
-	]
-	# 这里可以发送休息选择信号给UI
-	message_requested.emit("选择休息方式")
+	var heal_amount = int(tower_data.player_max_hp * 0.3)
+	tower_data.player_hp = min(tower_data.player_max_hp, tower_data.player_hp + heal_amount)
+	message_requested.emit("恢复了 " + str(heal_amount) + " 点生命值")
 	advance_floor()
 
 func handle_shop_choice():
@@ -69,6 +76,7 @@ func handle_treasure_choice():
 
 func advance_floor():
 	tower_data.current_floor += 1
+	save_to_game_data()
 	
 	if tower_data.current_floor > tower_data.max_floor:
 		handle_victory()
@@ -92,6 +100,7 @@ func emit_ui_update():
 		"player_hp": tower_data.player_hp,
 		"player_max_hp": tower_data.player_max_hp
 	}
+	print("Emitting UI update: ", data)
 	ui_update_requested.emit(data)
 
 # 从战斗返回后调用
