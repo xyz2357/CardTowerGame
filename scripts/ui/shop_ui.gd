@@ -128,7 +128,7 @@ func create_card_item_ui(container: VBoxContainer, card_data: Dictionary):
 	buy_button.disabled = player_gold < card_data.price
 	container.add_child(buy_button)
 	
-	buy_button.pressed.connect(func(): buy_item(card_data, buy_button, container))
+	buy_button.pressed.connect(func(): buy_item(card_data, container))
 
 func create_special_item_ui(container: VBoxContainer, item_data: Dictionary):
 	# 物品图标/背景
@@ -172,9 +172,10 @@ func create_special_item_ui(container: VBoxContainer, item_data: Dictionary):
 	buy_button.disabled = player_gold < item_data.price
 	container.add_child(buy_button)
 	
-	buy_button.pressed.connect(func(): buy_item(item_data, buy_button, container))
+	buy_button.pressed.connect(func(): buy_item(item_data, container))
 
-func buy_item(item_data: Dictionary, button: Button, container: Control):
+# 修复：移除未使用的 button 参数
+func buy_item(item_data: Dictionary, container: Control):
 	if player_gold < item_data.price:
 		show_message("金币不足!")
 		return

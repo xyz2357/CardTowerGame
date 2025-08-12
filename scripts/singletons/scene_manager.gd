@@ -50,9 +50,19 @@ func transition_to_scene(scene_path: String):
 	
 	is_transitioning = true
 	
+	# 获取当前场景
+	var current_scene = get_tree().current_scene
+	if not current_scene:
+		print("Warning: current_scene is null, using direct scene change")
+		var result = get_tree().change_scene_to_file(scene_path)
+		is_transitioning = false
+		if result != OK:
+			print("Failed to load scene: ", scene_path)
+		return
+	
 	# 简单的淡出效果
 	var fade_overlay = create_fade_overlay()
-	get_tree().current_scene.add_child(fade_overlay)
+	current_scene.add_child(fade_overlay)
 	
 	var tween = create_tween()
 	tween.tween_property(fade_overlay, "modulate", Color(0, 0, 0, 1), 0.3)
@@ -70,16 +80,19 @@ func transition_to_scene(scene_path: String):
 	await get_tree().process_frame
 	
 	# 淡入效果
-	var new_fade_overlay = create_fade_overlay()
-	new_fade_overlay.modulate = Color(0, 0, 0, 1)
-	get_tree().current_scene.add_child(new_fade_overlay)
+	var new_current_scene = get_tree().current_scene
+	if new_current_scene:
+		var new_fade_overlay = create_fade_overlay()
+		new_fade_overlay.modulate = Color(0, 0, 0, 1)
+		new_current_scene.add_child(new_fade_overlay)
+		
+		var fade_in_tween = create_tween()
+		fade_in_tween.tween_property(new_fade_overlay, "modulate", Color(0, 0, 0, 0), 0.3)
+		
+		await fade_in_tween.finished
+		
+		new_fade_overlay.queue_free()
 	
-	var fade_in_tween = create_tween()
-	fade_in_tween.tween_property(new_fade_overlay, "modulate", Color(0, 0, 0, 0), 0.3)
-	
-	await fade_in_tween.finished
-	
-	new_fade_overlay.queue_free()
 	is_transitioning = false
 
 func create_fade_overlay() -> ColorRect:
@@ -87,6 +100,7 @@ func create_fade_overlay() -> ColorRect:
 	overlay.color = Color(0, 0, 0, 0)
 	overlay.anchors_preset = Control.PRESET_FULL_RECT
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.z_index = 1000  # 确保在最顶层
 	return overlay
 
 func reload_current_scene():
@@ -105,7 +119,7 @@ func quit_game():
 # 获取当前场景名称
 func get_current_scene_name() -> String:
 	var current_scene = get_tree().current_scene
-	if current_scene:
+	if current_scene and current_scene.scene_file_path:
 		return current_scene.scene_file_path.get_file().get_basename()
 	return ""
 
@@ -145,6 +159,7 @@ func _input(event):
 func show_quick_message(text: String):
 	var current_scene = get_tree().current_scene
 	if not current_scene:
+		print("Quick message: ", text)
 		return
 	
 	var label = Label.new()
@@ -152,6 +167,7 @@ func show_quick_message(text: String):
 	label.modulate = Color.YELLOW
 	label.position = Vector2(20, 20)
 	label.add_theme_font_size_override("font_size", 24)
+	label.z_index = 999
 	current_scene.add_child(label)
 	
 	var tween = create_tween()

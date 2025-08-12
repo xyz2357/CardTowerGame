@@ -48,8 +48,8 @@ func connect_signals():
 	# 连接控制器信号
 	tower_controller.ui_update_requested.connect(_on_ui_update_requested)
 	tower_controller.choices_update_requested.connect(_on_choices_update_requested)
-	tower_controller.message_requested.connect(_on_message_requested)
 	tower_controller.battle_requested.connect(_on_battle_requested)
+	# 移除这行：tower_controller.message_requested.connect(_on_message_requested)
 	
 	# 连接UI信号到控制器
 	choice_selected.connect(tower_controller.handle_choice_selected)
@@ -127,29 +127,20 @@ func _on_choice_button_clicked(choice_data: Dictionary):
 	print("Choice button clicked: ", choice_data)
 	choice_selected.emit(choice_data)
 
-func _on_message_requested(message: String):
-	print("Message requested: ", message)
-	show_message(message)
+# 移除这个函数，因为我们不再使用 message_requested 信号
+# func _on_message_requested(message: String):
+#	print("Message requested: ", message)
+#	show_message(message)
 
 func _on_battle_requested(enemy_data: Dictionary):
 	print("Battle requested with enemy: ", enemy_data)
 	# 切换到战斗场景
 	SceneManager.load_battle_scene(enemy_data)
 
-# 简化的消息显示
-var current_dialog: AcceptDialog = null
-
+# 直接在需要的地方调用显示消息的方法
 func show_message(text: String):
-	if current_dialog and is_instance_valid(current_dialog):
-		current_dialog.queue_free()
-	
-	current_dialog = AcceptDialog.new()
+	var current_dialog: AcceptDialog = AcceptDialog.new()
 	current_dialog.dialog_text = text
 	add_child(current_dialog)
 	current_dialog.popup_centered()
-	current_dialog.confirmed.connect(_cleanup_dialog)
-
-func _cleanup_dialog():
-	if current_dialog and is_instance_valid(current_dialog):
-		current_dialog.queue_free()
-		current_dialog = null
+	current_dialog.confirmed.connect(func(): current_dialog.queue_free())

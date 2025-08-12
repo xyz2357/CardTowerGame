@@ -15,6 +15,7 @@ func _ready():
 	connect_signals()
 	update_display()
 	setup_title_animation()
+	_ready_effects()  # 调用视觉效果设置
 
 func setup_ui_references():
 	title_label = $CenterContainer/VBoxContainer/Title

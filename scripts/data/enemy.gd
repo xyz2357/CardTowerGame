@@ -60,7 +60,6 @@ func setup_ai_pattern():
 
 func take_damage(amount: int):
 	# 护甲先抵挡伤害
-	var original_amount = amount
 	if current_block > 0:
 		var blocked = min(current_block, amount)
 		current_block -= blocked

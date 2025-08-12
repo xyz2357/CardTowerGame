@@ -328,7 +328,7 @@ func _on_turn_started(is_player: bool):
 	else:
 		log_message.emit(enemy.enemy_name + " 的回合")
 
-func _on_turn_ended(is_player: bool):
+func _on_turn_ended(_is_player: bool):
 	pass
 
 func emit_ui_update():

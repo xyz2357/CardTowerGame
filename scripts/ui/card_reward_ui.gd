@@ -13,7 +13,6 @@ var reward_cards: Array[Dictionary] = []
 var selected_card: Dictionary = {}
 var selected_card_ui: CardUI = null
 
-signal card_selected(card_data: Dictionary)
 signal reward_skipped
 signal reward_confirmed(card_data: Dictionary)
 

@@ -5,8 +5,8 @@ class_name TowerController
 
 signal ui_update_requested(data: Dictionary)
 signal choices_update_requested(choices: Array)
-signal message_requested(message: String)
 signal battle_requested(enemy_data: Dictionary)
+# 移除未使用的信号：signal message_requested(message: String)
 
 var tower_data: TowerData
 var choice_generator: ChoiceGenerator
@@ -202,7 +202,7 @@ func handle_victory():
 		dialog.queue_free()
 		# 重置游戏或返回主菜单
 		GameData.reset_game()
-		SceneManager.load_tower_scene()
+		SceneManager.load_main_menu()
 	)
 
 func save_to_game_data():

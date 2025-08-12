@@ -1,6 +1,6 @@
 extends Control
 
-# 战斗UI控制器 - 只负责UI展示和用户交互
+# 战斗UI控制器 - 修复卡牌重复创建问题
 class_name BattleUI
 
 @export var player_hp_label_path: NodePath
@@ -30,19 +30,10 @@ signal end_turn_requested
 
 func _ready():
 	print("BattleUI _ready called")
-	# 获取UI节点引用
 	setup_ui_references()
-	
-	# 创建额外的UI元素
 	create_additional_ui()
-	
-	# 创建战斗控制器
-	battle_controller = BattleController.new()
-	add_child(battle_controller)
-	
-	# 连接信号
+	create_battle_controller()
 	connect_signals()
-	
 	print("BattleUI setup complete")
 
 func setup_ui_references():
@@ -50,32 +41,22 @@ func setup_ui_references():
 	
 	if player_hp_label_path:
 		player_hp_label = get_node(player_hp_label_path)
-		print("Player HP label found: ", player_hp_label)
-	
 	if enemy_hp_label_path:
 		enemy_hp_label = get_node(enemy_hp_label_path)
-		print("Enemy HP label found: ", enemy_hp_label)
-	
 	if player_energy_label_path:
 		player_energy_label = get_node(player_energy_label_path)
-		print("Player energy label found: ", player_energy_label)
-	
 	if hand_container_path:
 		hand_container = get_node(hand_container_path)
 		print("Hand container found: ", hand_container)
-	
 	if battle_log_path:
 		battle_log = get_node(battle_log_path)
-		print("Battle log found: ", battle_log)
 		if battle_log:
 			battle_log.editable = false
-	
 	if end_turn_button_path:
 		end_turn_button = get_node(end_turn_button_path)
 		if end_turn_button:
 			end_turn_button.pressed.connect(_on_end_turn_pressed)
 			end_turn_button.text = "结束回合"
-		print("End turn button found: ", end_turn_button)
 
 func create_additional_ui():
 	# 创建敌人意图显示标签
@@ -94,23 +75,25 @@ func create_additional_ui():
 		battle_log.get_parent().add_child(deck_status_label)
 		battle_log.get_parent().move_child(deck_status_label, battle_log.get_index())
 
+func create_battle_controller():
+	battle_controller = BattleController.new()
+	add_child(battle_controller)
+
 func connect_signals():
 	print("Connecting signals...")
-	# 连接战斗控制器信号
 	battle_controller.ui_update_requested.connect(_on_ui_update_requested)
 	battle_controller.log_message.connect(_on_log_message)
 	battle_controller.battle_won.connect(_on_battle_won)
 	battle_controller.battle_lost.connect(_on_battle_lost)
 	
-	# 连接UI信号到控制器
 	card_play_requested.connect(battle_controller.play_card)
 	end_turn_requested.connect(battle_controller.end_player_turn)
-	
 	print("All signals connected")
 
 func _on_ui_update_requested(data: Dictionary):
-	print("UI update requested with data keys: ", data.keys())
+	print("=== UI UPDATE REQUESTED ===")
 	print("Hand cards count: ", data.get("hand_cards", []).size())
+	print("Current active card UIs: ", active_card_uis.size())
 	
 	update_ui_display(data)
 	update_hand_display(data.get("hand_cards", []))
@@ -152,31 +135,59 @@ func update_ui_display(data: Dictionary):
 	# 更新结束回合按钮
 	if end_turn_button:
 		end_turn_button.disabled = not data.get("is_player_turn", false)
-		if data.get("is_player_turn", false):
-			end_turn_button.modulate = Color.WHITE
-		else:
-			end_turn_button.modulate = Color.GRAY
 
 func update_hand_display(hand_cards: Array):
-	print("Updating hand display with ", hand_cards.size(), " cards")
+	print("=== UPDATING HAND DISPLAY ===")
+	print("New hand cards: ", hand_cards.size())
+	print("Container children before clear: ", hand_container.get_child_count() if hand_container else 0)
 	
-	# 清除旧的卡牌UI
-	clear_hand_display()
+	# 🔧 关键修复：彻底清理旧卡牌
+	clear_hand_display_completely()
+	
+	print("Container children after clear: ", hand_container.get_child_count() if hand_container else 0)
 	
 	# 创建新的卡牌UI
 	for i in range(hand_cards.size()):
 		var card_data = hand_cards[i]
-		print("Creating card UI for: ", card_data)
+		print("Creating card ", i, ": ", card_data.get("name", "Unknown"))
 		create_card_ui(card_data)
 	
-	print("Hand display updated, active card UIs: ", active_card_uis.size())
+	print("Container children after creation: ", hand_container.get_child_count() if hand_container else 0)
+	print("Active card UIs: ", active_card_uis.size())
 
-func clear_hand_display():
-	print("Clearing hand display, removing ", active_card_uis.size(), " cards")
+# 🔧 新的彻底清理方法
+func clear_hand_display_completely():
+	print("=== CLEARING HAND DISPLAY COMPLETELY ===")
+	
+	if not hand_container:
+		print("ERROR: hand_container is null!")
+		return
+	
+	print("Clearing ", active_card_uis.size(), " active card UIs")
+	print("Container has ", hand_container.get_child_count(), " children")
+	
+	# 方法1：清理我们跟踪的卡牌UI
 	for card_ui in active_card_uis:
 		if is_instance_valid(card_ui):
+			print("Removing tracked card UI: ", card_ui.card_data.get("name", "Unknown"))
 			card_ui.queue_free()
 	active_card_uis.clear()
+	
+	# 方法2：清理容器中的所有子节点（确保没有遗漏）
+	var children_to_remove = []
+	for child in hand_container.get_children():
+		if child is CardUI:
+			children_to_remove.append(child)
+	
+	for child in children_to_remove:
+		print("Removing container child: ", child)
+		hand_container.remove_child(child)
+		child.queue_free()
+	
+	# 方法3：强制处理队列，确保立即清理
+	await get_tree().process_frame
+	
+	print("Final container children count: ", hand_container.get_child_count())
 
 func create_card_ui(card_data: Dictionary):
 	if not hand_container:
@@ -192,6 +203,8 @@ func create_card_ui(card_data: Dictionary):
 		print("ERROR: Failed to instantiate card UI!")
 		return
 	
+	print("Creating card UI for: ", card_data.get("name", "Unknown"))
+	
 	hand_container.add_child(card_ui)
 	card_ui.setup_card(card_data)
 	card_ui.card_played.connect(_on_card_played)
@@ -201,91 +214,56 @@ func create_card_ui(card_data: Dictionary):
 		hand_container.add_theme_constant_override("separation", 10)
 	
 	active_card_uis.append(card_ui)
-	print("Card UI created and added, total active: ", active_card_uis.size())
+	
+	print("Card UI created successfully")
+	print("  - Position: ", card_ui.position)
+	print("  - Size: ", card_ui.size)
+	print("  - Mouse filter: ", card_ui.mouse_filter)
 
 func _on_card_played(card_data: Dictionary, card_ui: CardUI):
-	print("Card played: ", card_data)
+	print("Card played signal received: ", card_data.get("name", "Unknown"))
 	card_play_requested.emit(card_data)
-	
-	# 添加卡牌播放效果
-	create_card_play_effect(card_ui.global_position)
 	
 	# 移除已打出的卡牌UI
 	if card_ui in active_card_uis:
 		active_card_uis.erase(card_ui)
-	card_ui.queue_free()
-
-func create_card_play_effect(position: Vector2):
-	# 简单的卡牌播放效果
-	var effect_label = Label.new()
-	effect_label.text = "PLAYED!"
-	effect_label.modulate = Color.YELLOW
-	effect_label.position = position
-	add_child(effect_label)
 	
-	var tween = create_tween()
-	tween.parallel().tween_property(effect_label, "position", position + Vector2(0, -50), 1.0)
-	tween.parallel().tween_property(effect_label, "modulate", Color.TRANSPARENT, 1.0)
-	tween.tween_callback(effect_label.queue_free)
+	# 🔧 安全地移除卡牌，检查父节点
+	if is_instance_valid(card_ui):
+		var card_parent = card_ui.get_parent()
+		if card_parent and is_instance_valid(card_parent):
+			card_parent.remove_child(card_ui)
+			print("Removed card from parent: ", card_parent)
+		else:
+			print("Card has no valid parent, skipping removal")
+		
+		card_ui.queue_free()
+	else:
+		print("Card UI is not valid, skipping removal")
 
 func _on_end_turn_pressed():
 	print("End turn button pressed")
 	end_turn_requested.emit()
-	
-	# 按钮点击效果
-	if end_turn_button:
-		var original_scale = end_turn_button.scale
-		var tween = create_tween()
-		tween.tween_property(end_turn_button, "scale", original_scale * 0.9, 0.1)
-		tween.tween_property(end_turn_button, "scale", original_scale, 0.1)
 
 func _on_log_message(message: String):
 	if battle_log:
 		battle_log.text += message + "\n"
-		# 自动滚动到底部
 		battle_log.call_deferred("set", "scroll_vertical", battle_log.get_line_count())
-		print("Log message added: ", message)
 
 func _on_battle_won():
-	show_result_dialog("胜利!", "恭喜你击败了敌人!\n\n点击确定返回地图。")
+	show_result_dialog("胜利!", "恭喜你击败了敌人!")
 
 func _on_battle_lost():
-	show_result_dialog("失败!", "你在战斗中败北了...\n\n点击确定返回地图。")
+	show_result_dialog("失败!", "你在战斗中败北了...")
 
 func show_result_dialog(title: String, message: String):
-	# 禁用所有交互
-	set_ui_interactable(false)
-	
 	var dialog = AcceptDialog.new()
 	dialog.title = title
 	dialog.dialog_text = message
-	dialog.get_ok_button().text = "确定"
 	add_child(dialog)
 	dialog.popup_centered()
 	
 	dialog.confirmed.connect(func(): 
 		dialog.queue_free()
-		# 返回地图场景
 		SceneManager.load_tower_scene()
 	)
-
-func set_ui_interactable(enabled: bool):
-	# 设置所有卡牌的交互性
-	for card_ui in active_card_uis:
-		if is_instance_valid(card_ui):
-			card_ui.set_interactable(enabled)
-	
-	# 设置结束回合按钮的交互性
-	if end_turn_button:
-		end_turn_button.disabled = not enabled
-
-# 添加键盘快捷键支持
-func _input(event):
-	if event is InputEventKey and event.pressed:
-		match event.keycode:
-			KEY_SPACE, KEY_ENTER:
-				if end_turn_button and not end_turn_button.disabled:
-					_on_end_turn_pressed()
-			KEY_ESCAPE:
-				# ESC键返回地图
-				SceneManager.load_tower_scene()
