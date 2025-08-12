@@ -25,18 +25,36 @@ const NORMAL_SCALE = Vector2(1.0, 1.0)
 const DRAG_Z_INDEX = 100
 
 func _ready():
+	print("CardUI _ready called")
 	setup_ui_references()
 	connect_mouse_events()
+	
+	# 设置卡牌的基本尺寸和可见性
+	custom_minimum_size = Vector2(120, 160)
+	size = Vector2(120, 160)
 
 func setup_ui_references():
+	print("Setting up card UI references...")
+	
 	if card_name_label_path:
 		card_name_label = get_node(card_name_label_path)
+		print("Card name label found: ", card_name_label)
+	
 	if cost_label_path:
 		cost_label = get_node(cost_label_path)
+		print("Cost label found: ", cost_label)
+	
 	if description_label_path:
 		description_label = get_node(description_label_path)
+		print("Description label found: ", description_label)
+	
 	if card_background_path:
 		card_background = get_node(card_background_path)
+		print("Card background found: ", card_background)
+		if card_background:
+			# 确保背景有默认颜色
+			if card_background is ColorRect:
+				card_background.color = Color.WHITE
 
 func connect_mouse_events():
 	mouse_entered.connect(_on_mouse_entered)
@@ -44,18 +62,25 @@ func connect_mouse_events():
 	gui_input.connect(_on_gui_input)
 
 func setup_card(data: Dictionary):
+	print("Setting up card with data: ", data)
 	card_data = data
 	update_display()
 
 func update_display():
+	print("Updating card display...")
+	
 	if card_name_label:
 		card_name_label.text = card_data.get("name", "未知")
+		print("Updated card name: ", card_name_label.text)
 	
 	if cost_label:
 		cost_label.text = str(card_data.get("cost", 0))
+		print("Updated cost: ", cost_label.text)
 	
 	if description_label:
-		description_label.text = generate_description()
+		var desc = generate_description()
+		description_label.text = desc
+		print("Updated description: ", desc)
 	
 	update_card_appearance()
 
@@ -84,18 +109,28 @@ func generate_description() -> String:
 
 func update_card_appearance():
 	if not card_background:
+		print("WARNING: card_background is null")
 		return
 	
 	# 根据卡牌类型设置颜色
+	var color = Color.WHITE
 	match card_data.get("type", ""):
 		"attack":
-			card_background.modulate = Color.LIGHT_CORAL
+			color = Color.LIGHT_CORAL
 		"skill":
-			card_background.modulate = Color.LIGHT_BLUE
+			color = Color.LIGHT_BLUE
 		"power":
-			card_background.modulate = Color.LIGHT_GREEN
+			color = Color.LIGHT_GREEN
 		_:
-			card_background.modulate = Color.WHITE
+			color = Color.LIGHT_GRAY
+	
+	# 确保背景有颜色
+	if card_background is ColorRect:
+		card_background.color = color
+		print("Card background color set to: ", color)
+	elif card_background.has_method("set_modulate"):
+		card_background.modulate = color
+		print("Card background modulate set to: ", color)
 
 func _on_mouse_entered():
 	if not is_dragging:
@@ -127,13 +162,15 @@ func handle_mouse_button(event: InputEventMouseButton):
 		end_drag()
 
 func start_drag():
+	print("Starting drag for card: ", card_data.get("name", "Unknown"))
 	is_dragging = true
-	original_position = global_position
+	original_position = position
 	original_parent = get_parent()
 	z_index = DRAG_Z_INDEX
 	
 	# 将卡牌移动到顶层以便拖拽
-	reparent(get_tree().current_scene)
+	if get_tree().current_scene:
+		reparent(get_tree().current_scene)
 
 func handle_drag(event: InputEventMouseMotion):
 	global_position += event.relative
@@ -142,11 +179,14 @@ func end_drag():
 	if not is_dragging:
 		return
 	
+	print("Ending drag for card: ", card_data.get("name", "Unknown"))
 	is_dragging = false
 	
 	if is_in_play_area():
+		print("Card played in play area")
 		play_card_action()
 	else:
+		print("Card returned to hand")
 		return_to_hand()
 
 func is_in_play_area() -> bool:
@@ -155,9 +195,11 @@ func is_in_play_area() -> bool:
 		return false
 	
 	var viewport_size = viewport.size
+	# 如果卡牌被拖到上半部分，认为是要打出
 	return global_position.y < viewport_size.y * 0.6
 
 func play_card_action():
+	print("Playing card: ", card_data)
 	card_played.emit(card_data, self)
 
 func return_to_hand():
