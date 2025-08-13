@@ -156,17 +156,17 @@ static func create_enemy(enemy_id: String) -> Enemy:
 	
 	match enemy_id:
 		"goblin":
-			enemy.initialize(25, 25, "哥布林")
+			enemy.initialize(5, 5, "哥布林")
 		"skeleton":
-			enemy.initialize(35, 35, "骷髅兵")
+			enemy.initialize(15, 15, "骷髅兵")
 		"wolf":
-			enemy.initialize(30, 30, "野狼")
+			enemy.initialize(20, 20, "野狼")
 		"bandit":
-			enemy.initialize(40, 40, "强盗")
+			enemy.initialize(20, 20, "强盗")
 		"orc_chief":
-			enemy.initialize(60, 60, "兽人酋长")
+			enemy.initialize(30, 30, "兽人酋长")
 		"shadow_assassin":
-			enemy.initialize(45, 45, "暗影刺客")
+			enemy.initialize(15, 15, "暗影刺客")
 		_:
 			if enemy_id.begins_with("boss_"):
 				var boss_level = enemy_id.split("_")[1].to_int()

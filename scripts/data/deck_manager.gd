@@ -44,11 +44,11 @@ func create_default_deck() -> Array[Dictionary]:
 		{"name": "攻击", "cost": 1, "damage": 6, "type": "attack", "id": generate_card_id()},
 		{"name": "攻击", "cost": 1, "damage": 6, "type": "attack", "id": generate_card_id()},
 		{"name": "攻击", "cost": 1, "damage": 6, "type": "attack", "id": generate_card_id()},
-		{"name": "防御", "cost": 1, "block": 5, "type": "skill", "id": generate_card_id()},
-		{"name": "防御", "cost": 1, "block": 5, "type": "skill", "id": generate_card_id()},
-		{"name": "防御", "cost": 1, "block": 5, "type": "skill", "id": generate_card_id()},
+		#{"name": "防御", "cost": 1, "block": 5, "type": "skill", "id": generate_card_id()},
+		#{"name": "防御", "cost": 1, "block": 5, "type": "skill", "id": generate_card_id()},
+		#{"name": "防御", "cost": 1, "block": 5, "type": "skill", "id": generate_card_id()},
 		{"name": "重击", "cost": 2, "damage": 12, "type": "attack", "id": generate_card_id()},
-		{"name": "治疗", "cost": 2, "heal": 8, "type": "skill", "id": generate_card_id()},
+		#{"name": "治疗", "cost": 2, "heal": 8, "type": "skill", "id": generate_card_id()},
 		{"name": "能量药水", "cost": 1, "energy": 2, "type": "skill", "id": generate_card_id()}
 	]
 

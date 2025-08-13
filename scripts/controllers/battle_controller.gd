@@ -95,19 +95,35 @@ func start_battle():
 
 func play_card(card_data: Dictionary) -> bool:
 	print("Attempting to play card: ", card_data)
+	print("Current energy: ", player.current_energy)
+	print("Card cost: ", card_data.get("cost", 0))
 	
 	if not is_battle_active or not turn_manager.is_player_turn():
 		print("Cannot play card - battle inactive or not player turn")
 		return false
 	
-	if not player.can_afford_card(card_data.cost):
-		log_message.emit("能量不足!")
-		print("Cannot afford card, cost: ", card_data.cost, " current energy: ", player.current_energy)
+	var card_cost = card_data.get("cost", 0)
+	var current_energy = player.current_energy
+	
+	# 🔧 更严格的费用检查
+	if current_energy < card_cost:
+		log_message.emit("能量不足! 需要 %d 能量，当前只有 %d" % [card_cost, current_energy])
+		print("Cannot afford card - cost: ", card_cost, " current energy: ", current_energy)
+		return false
+	
+	# 🔧 再次确认玩家状态
+	if not player.can_afford_card(card_cost):
+		log_message.emit("玩家状态检查失败!")
+		print("Player.can_afford_card returned false")
 		return false
 	
 	# 消耗能量
-	player.spend_energy(card_data.cost)
-	print("Spent energy, remaining: ", player.current_energy)
+	if not player.spend_energy(card_cost):
+		log_message.emit("扣除能量失败!")
+		print("Failed to spend energy")
+		return false
+	
+	print("Energy spent successfully, remaining: ", player.current_energy)
 	
 	# 执行卡牌效果
 	execute_card_effect(card_data)
@@ -277,19 +293,37 @@ func _on_enemy_died():
 	# 显示卡牌奖励
 	show_card_rewards()
 
+
 func show_card_rewards():
 	var enemy_data = GameData.get_current_enemy_data()
-	var enemy_type = "normal"
+	var enemy_type = "normal"  # 🔧 默认为字符串类型
 	
 	# 根据敌人数据确定类型
 	if enemy_data.has("type"):
-		enemy_type = enemy_data.type
+		var type_value = enemy_data.type
+		# 🔧 处理类型可能是整数的情况
+		if type_value is int:
+			match type_value:
+				ChoiceGenerator.ChoiceType.ENEMY:
+					enemy_type = "normal"
+				ChoiceGenerator.ChoiceType.ELITE:
+					enemy_type = "elite"
+				ChoiceGenerator.ChoiceType.BOSS:
+					enemy_type = "boss"
+				_:
+					enemy_type = "normal"
+		else:
+			enemy_type = str(type_value)
 	elif enemy_data.has("enemy_id"):
 		var enemy_id = enemy_data.enemy_id
 		if enemy_id.begins_with("boss_"):
 			enemy_type = "boss"
 		elif enemy_id in ["orc_chief", "shadow_assassin"]:
 			enemy_type = "elite"
+		else:
+			enemy_type = "normal"
+	
+	print("Determined enemy type: ", enemy_type, " (", typeof(enemy_type), ")")
 	
 	# 生成奖励卡牌
 	var rewards = CardRewards.get_battle_rewards(enemy_type, GameData.current_floor)
@@ -299,23 +333,46 @@ func show_card_rewards():
 	
 	# 显示奖励界面
 	var reward_ui = CardRewardUI.show_card_rewards(get_tree().current_scene, rewards)
-	reward_ui.reward_confirmed.connect(_on_reward_confirmed)
-	reward_ui.reward_skipped.connect(_on_reward_skipped)
+	
+	# 🔧 确保信号连接成功
+	if reward_ui:
+		print("Connecting reward UI signals...")
+		var confirm_connection = reward_ui.reward_confirmed.connect(_on_reward_confirmed)
+		var skip_connection = reward_ui.reward_skipped.connect(_on_reward_skipped)
+		print("Reward confirmed signal connected: ", confirm_connection == OK)
+		print("Reward skipped signal connected: ", skip_connection == OK)
+	else:
+		print("ERROR: Failed to create reward UI!")
 
 func _on_reward_confirmed(card_data: Dictionary):
-	print("Player selected reward: ", card_data.name)
+	print("🎉 BATTLE CONTROLLER: Reward confirmation received!")
+	print("  - Card: ", card_data.name)
+	print("  - Battle controller valid: ", is_instance_valid(self))
+	print("  - Battle active: ", is_battle_active)
+	
 	GameData.add_card_to_deck(card_data)
 	log_message.emit("获得了新卡牌: " + card_data.name)
 	
+	print("⏰ Waiting 1 second before emitting battle_won...")
 	await get_tree().create_timer(1.0).timeout
+	
+	print("🏆 Emitting battle_won signal")
 	battle_won.emit()
+	print("✅ Reward confirmation completed")
 
 func _on_reward_skipped():
-	print("Player skipped reward")
+	print("⏭️ BATTLE CONTROLLER: Reward skip received!")
+	print("  - Battle controller valid: ", is_instance_valid(self))
+	print("  - Battle active: ", is_battle_active)
+	
 	log_message.emit("跳过了卡牌奖励")
 	
+	print("⏰ Waiting 1 second before emitting battle_won...")
 	await get_tree().create_timer(1.0).timeout
+	
+	print("🏆 Emitting battle_won signal")
 	battle_won.emit()
+	print("✅ Reward skip completed")
 
 func _on_player_died():
 	is_battle_active = false

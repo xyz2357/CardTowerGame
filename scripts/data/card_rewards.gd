@@ -13,12 +13,19 @@ enum Rarity {
 static func get_battle_rewards(enemy_type: String, floor: int) -> Array[Dictionary]:
 	var rewards: Array[Dictionary] = []
 	
+	print("Getting battle rewards for enemy_type: ", enemy_type, " floor: ", floor)
+	
 	# 根据敌人类型和楼层决定奖励数量
 	var reward_count = 3
-	if enemy_type == "elite":
-		reward_count = 4
-	elif enemy_type == "boss":
-		reward_count = 5
+	match enemy_type:
+		"elite":
+			reward_count = 4
+		"boss":
+			reward_count = 5
+		_:  # "normal" 或其他情况
+			reward_count = 3
+	
+	print("Reward count: ", reward_count)
 	
 	# 生成奖励卡牌
 	for i in range(reward_count):
@@ -33,12 +40,15 @@ static func determine_rarity(enemy_type: String, floor: int) -> Rarity:
 	var rare_chance = 0.1 + floor * 0.02  # 楼层越高，稀有卡概率越高
 	var uncommon_chance = 0.3
 	
-	if enemy_type == "elite":
-		rare_chance += 0.15
-		uncommon_chance += 0.2
-	elif enemy_type == "boss":
-		rare_chance += 0.25
-		uncommon_chance += 0.3
+	match enemy_type:
+		"elite":
+			rare_chance += 0.15
+			uncommon_chance += 0.2
+		"boss":
+			rare_chance += 0.25
+			uncommon_chance += 0.3
+		_:  # "normal" 或其他情况
+			pass  # 使用基础概率
 	
 	var roll = randf()
 	

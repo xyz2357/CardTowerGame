@@ -46,18 +46,27 @@ func add_block(amount: int):
 	block_changed.emit()
 
 func spend_energy(amount: int) -> bool:
+	print("Attempting to spend ", amount, " energy. Current: ", current_energy)
+	
 	if current_energy >= amount:
 		current_energy -= amount
+		print("Energy spent successfully. New energy: ", current_energy)
 		energy_changed.emit()
 		return true
-	return false
-
-func add_energy(amount: int):
-	current_energy = min(current_energy + amount, 10)  # 设置能量上限
-	energy_changed.emit()
+	else:
+		print("Not enough energy to spend ", amount, ". Current: ", current_energy)
+		return false
 
 func can_afford_card(cost: int) -> bool:
-	return current_energy >= cost
+	var can_afford = current_energy >= cost
+	print("Can afford card with cost ", cost, "? ", can_afford, " (current energy: ", current_energy, ")")
+	return can_afford
+
+func add_energy(amount: int):
+	var old_energy = current_energy
+	current_energy = min(current_energy + amount, 10)  # 设置能量上限
+	print("Added ", amount, " energy. Old: ", old_energy, " New: ", current_energy)
+	energy_changed.emit()
 
 func start_new_turn():
 	current_energy = max_energy
