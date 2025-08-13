@@ -59,23 +59,22 @@ func setup_ai_pattern():
 	print("Enemy AI pattern set up with ", ai_pattern.size(), " actions")
 
 func take_damage(amount: int):
+	var initial_health = current_health
+	
 	# 护甲先抵挡伤害
 	if current_block > 0:
 		var blocked = min(current_block, amount)
 		current_block -= blocked
 		amount -= blocked
-		print("Enemy blocked ", blocked, " damage, remaining block: ", current_block)
 	
 	# 剩余伤害扣血
 	if amount > 0:
 		current_health = max(0, current_health - amount)
-		print("Enemy took ", amount, " damage, HP: ", current_health, "/", max_health)
-	
-	health_changed.emit()
-	
-	if current_health <= 0:
-		print("Enemy died!")
-		died.emit()
+		health_changed.emit()  # 只在生命值实际改变时发射
+		
+		if current_health <= 0:
+			died.emit()
+	# 如果生命值没有实际改变，则不发射 health_changed 信号
 
 func add_block(amount: int):
 	current_block += amount

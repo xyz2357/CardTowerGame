@@ -17,3 +17,7 @@ config/features=PackedStringArray("4.4")
 
 SceneManager="*res://scripts/singletons/scene_manager.gd"
 GameData="*res://scripts/singletons/game_data.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gdUnit4/plugin.cfg")

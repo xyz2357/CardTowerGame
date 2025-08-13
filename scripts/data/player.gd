@@ -22,6 +22,7 @@ func initialize(health: int, max_hp: int, energy: int, max_en: int):
 	current_block = 0
 
 func take_damage(amount: int):
+	var initial_health = current_health
 	# 护甲先抵挡伤害
 	if current_block > 0:
 		var blocked = min(current_block, amount)
@@ -32,11 +33,11 @@ func take_damage(amount: int):
 	# 剩余伤害扣血
 	if amount > 0:
 		current_health = max(0, current_health - amount)
-		health_changed.emit()
+		health_changed.emit()  # 只在生命值实际改变时发射
 		
 		if current_health <= 0:
 			died.emit()
-
+	
 func heal(amount: int):
 	current_health = min(max_health, current_health + amount)
 	health_changed.emit()
@@ -45,16 +46,12 @@ func add_block(amount: int):
 	current_block += amount
 	block_changed.emit()
 
-func spend_energy(amount: int) -> bool:
-	print("Attempting to spend ", amount, " energy. Current: ", current_energy)
-	
+func spend_energy(amount: int) -> bool:	
 	if current_energy >= amount:
 		current_energy -= amount
-		print("Energy spent successfully. New energy: ", current_energy)
 		energy_changed.emit()
 		return true
 	else:
-		print("Not enough energy to spend ", amount, ". Current: ", current_energy)
 		return false
 
 func can_afford_card(cost: int) -> bool:
@@ -65,7 +62,6 @@ func can_afford_card(cost: int) -> bool:
 func add_energy(amount: int):
 	var old_energy = current_energy
 	current_energy = min(current_energy + amount, 10)  # 设置能量上限
-	print("Added ", amount, " energy. Old: ", old_energy, " New: ", current_energy)
 	energy_changed.emit()
 
 func start_new_turn():

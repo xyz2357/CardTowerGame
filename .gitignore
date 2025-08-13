@@ -1,2 +1,5 @@
 *.tmp
 *.uid
+.godot/
+reports/
+*import
