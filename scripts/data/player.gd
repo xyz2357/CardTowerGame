@@ -56,7 +56,6 @@ func spend_energy(amount: int) -> bool:
 
 func can_afford_card(cost: int) -> bool:
 	var can_afford = current_energy >= cost
-	print("Can afford card with cost ", cost, "? ", can_afford, " (current energy: ", current_energy, ")")
 	return can_afford
 
 func add_energy(amount: int):

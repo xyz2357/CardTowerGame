@@ -12,9 +12,7 @@ enum Rarity {
 # 获取战斗胜利后的卡牌奖励
 static func get_battle_rewards(enemy_type: String, floor: int) -> Array[Dictionary]:
 	var rewards: Array[Dictionary] = []
-	
-	print("Getting battle rewards for enemy_type: ", enemy_type, " floor: ", floor)
-	
+		
 	# 根据敌人类型和楼层决定奖励数量
 	var reward_count = 3
 	match enemy_type:
@@ -24,9 +22,7 @@ static func get_battle_rewards(enemy_type: String, floor: int) -> Array[Dictiona
 			reward_count = 5
 		_:  # "normal" 或其他情况
 			reward_count = 3
-	
-	print("Reward count: ", reward_count)
-	
+		
 	# 生成奖励卡牌
 	for i in range(reward_count):
 		var rarity = determine_rarity(enemy_type, floor)

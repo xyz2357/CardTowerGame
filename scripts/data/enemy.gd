@@ -20,7 +20,6 @@ func initialize(health: int, max_hp: int, name: String = "敌人"):
 	enemy_name = name
 	current_block = 0
 	setup_ai_pattern()
-	print("Enemy initialized: ", enemy_name, " HP: ", current_health, "/", max_health)
 
 func setup_ai_pattern():
 	# 根据敌人类型设置不同的AI模式
@@ -56,8 +55,6 @@ func setup_ai_pattern():
 				{"type": "defend", "block": randi_range(4, 7), "name": "基础防御"}
 			]
 	
-	print("Enemy AI pattern set up with ", ai_pattern.size(), " actions")
-
 func take_damage(amount: int):
 	var initial_health = current_health
 	
@@ -78,7 +75,6 @@ func take_damage(amount: int):
 
 func add_block(amount: int):
 	current_block += amount
-	print("Enemy gained ", amount, " block, total: ", current_block)
 
 func execute_turn() -> Dictionary:
 	var intent = get_current_intent()
@@ -99,7 +95,6 @@ func execute_turn() -> Dictionary:
 				result.damage = intent.damage
 	
 	advance_intent()
-	print("Enemy executed: ", result.name, " Damage: ", result.damage, " Block: ", result.block)
 	return result
 
 func get_attack_damage() -> int:
@@ -137,7 +132,6 @@ func get_next_intent_preview() -> Dictionary:
 func start_new_turn():
 	# 每回合开始时清除护甲
 	current_block = 0
-	print("Enemy started new turn, block reset to 0")
 
 func get_status() -> Dictionary:
 	return {

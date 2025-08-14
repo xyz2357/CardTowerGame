@@ -348,23 +348,17 @@ func test_signal_count_simple():
 	# 连接信号计数器
 	turn_manager.turn_started.connect(func(is_player: bool): 
 		signal_counts.started += 1
-		print("turn_started signal received, count: ", signal_counts.started, ", is_player: ", is_player)
 	)
 	turn_manager.turn_ended.connect(func(is_player: bool): 
 		signal_counts.ended += 1
-		print("turn_ended signal received, count: ", signal_counts.ended, ", is_player: ", is_player)
 	)
 	
 	# 执行一个回合
-	print("Starting player turn...")
 	turn_manager.start_player_turn()
-	print("After start_player_turn(), counts: ", signal_counts)
 	assert_that(signal_counts.started).is_equal(1)
 	assert_that(signal_counts.ended).is_equal(0)
 	
-	print("Ending player turn...")
 	turn_manager.end_player_turn()
-	print("After end_player_turn(), counts: ", signal_counts)
 	assert_that(signal_counts.started).is_equal(1)
 	assert_that(signal_counts.ended).is_equal(1)
 
