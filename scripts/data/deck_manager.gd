@@ -12,17 +12,13 @@ var discard_pile: Array[Dictionary] = []
 var exhaust_pile: Array[Dictionary] = []
 
 func initialize_default_deck():
-	print("Initializing default deck...")
 	deck = create_default_deck()
 	deck.shuffle()
 	hand.clear()
 	discard_pile.clear()
 	exhaust_pile.clear()
 	
-	print("Deck initialized with ", deck.size(), " cards")
-
 func initialize_from_game_data(player_deck: Array):
-	print("Initializing deck from game data...")
 	deck.clear()
 	
 	# 复制玩家卡组并添加ID
@@ -36,8 +32,6 @@ func initialize_from_game_data(player_deck: Array):
 	discard_pile.clear()
 	exhaust_pile.clear()
 	
-	print("Deck initialized from game data with ", deck.size(), " cards")
-
 func create_default_deck() -> Array[Dictionary]:
 	return [
 		{"name": "攻击", "cost": 1, "damage": 6, "type": "attack", "id": generate_card_id()},
@@ -56,50 +50,38 @@ func generate_card_id() -> String:
 	return "card_" + str(Time.get_unix_time_from_system()) + "_" + str(randi())
 
 func draw_starting_hand():
-	print("Drawing starting hand...")
 	hand.clear()  # 确保手牌为空
 	for i in range(5):
-		if draw_card():
-			print("Drew card ", i + 1, ": ", hand[hand.size()-1].name)
-		else:
-			print("Failed to draw card ", i + 1)
-	print("Starting hand size: ", hand.size())
+		draw_card()
 
 func draw_card() -> bool:
 	if deck.is_empty():
-		print("Deck is empty, shuffling discard pile...")
 		shuffle_discard_into_deck()
 	
 	if not deck.is_empty():
 		var card = deck.pop_front()
 		hand.append(card)
-		print("Drew card: ", card.name, " (hand size: ", hand.size(), ")")
 		hand_changed.emit()
 		deck_changed.emit()
 		return true
 	else:
-		print("No cards available to draw!")
 		return false
 
 func draw_cards(count: int):
-	print("Drawing ", count, " cards...")
 	for i in range(count):
 		if not draw_card():
 			break
 
 func shuffle_discard_into_deck():
 	if discard_pile.is_empty():
-		print("Discard pile is empty, nothing to shuffle")
 		return
 	
-	print("Shuffling ", discard_pile.size(), " cards from discard pile into deck")
 	deck.append_array(discard_pile)
 	discard_pile.clear()
 	deck.shuffle()
 	deck_changed.emit()
 
 func play_card(card_data: Dictionary):
-	print("Playing card: ", card_data.name)
 	
 	# 从手牌中移除
 	var removed = false
@@ -107,21 +89,15 @@ func play_card(card_data: Dictionary):
 		if hand[i].id == card_data.id:
 			hand.remove_at(i)
 			removed = true
-			print("Removed card from hand, new hand size: ", hand.size())
 			break
-	
-	if not removed:
-		print("WARNING: Card not found in hand!")
 	
 	# 添加到弃牌堆
 	discard_pile.append(card_data)
-	print("Added card to discard pile, discard size: ", discard_pile.size())
 	
 	hand_changed.emit()
 	deck_changed.emit()
 
-func discard_hand():
-	print("Discarding entire hand...")
+
 	discard_pile.append_array(hand)
 	hand.clear()
 	hand_changed.emit()
@@ -134,7 +110,6 @@ func discard_card(card_data: Dictionary):
 			var card = hand[i]
 			hand.remove_at(i)
 			discard_pile.append(card)
-			print("Discarded card: ", card.name)
 			break
 	
 	hand_changed.emit()
@@ -147,7 +122,6 @@ func exhaust_card(card_data: Dictionary):
 			var card = hand[i]
 			hand.remove_at(i)
 			exhaust_pile.append(card)
-			print("Exhausted card: ", card.name)
 			break
 	
 	hand_changed.emit()
@@ -177,7 +151,6 @@ func remove_card_from_deck(card_name: String) -> bool:
 
 func get_hand_cards() -> Array[Dictionary]:
 	var hand_copy = hand.duplicate()
-	print("Returning hand with ", hand_copy.size(), " cards")
 	return hand_copy
 
 func get_deck_status() -> Dictionary:
