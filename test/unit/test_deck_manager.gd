@@ -331,18 +331,49 @@ func test_remove_card_from_deck():
 	assert_that(result).is_equal(true)
 	assert_that(deck_manager.deck.size()).is_equal(initial_deck_size - 1)
 
-func test_remove_card_from_discard():
-	deck_manager.initialize_default_deck()
-	deck_manager.draw_starting_hand()
-	deck_manager.discard_hand()
+func test_remove_card_priority_deck_first():
+	# 测试 remove_card_from_deck 的优先级：先从牌库移除，再从弃牌堆移除
+	deck_manager.deck = [
+		{"name": "相同卡", "cost": 1, "id": "deck_card"}
+	]
+	deck_manager.hand.clear()
+	deck_manager.discard_pile = [
+		{"name": "相同卡", "cost": 1, "id": "discard_card"}
+	]
 	
-	var card_name = deck_manager.discard_pile[0].name
+	var result = deck_manager.remove_card_from_deck("相同卡")
+	
+	assert_that(result).is_equal(true)
+	# 应该从牌库中移除，所以牌库为空但弃牌堆仍有卡
+	assert_that(deck_manager.deck).is_empty()
+	assert_that(deck_manager.discard_pile.size()).is_equal(1)
+	assert_that(deck_manager.discard_pile[0].id).is_equal("discard_card")
+
+func test_remove_card_from_discard():
+	# 创建一个只有弃牌堆有卡的情况
+	deck_manager.deck.clear()
+	deck_manager.hand.clear()
+	deck_manager.discard_pile = [
+		{"name": "测试卡A", "cost": 1, "id": "test_a"},
+		{"name": "测试卡B", "cost": 2, "id": "test_b"},
+		{"name": "测试卡C", "cost": 3, "id": "test_c"}
+	]
+	
+	var card_name = "测试卡B"
 	var initial_discard_size = deck_manager.discard_pile.size()
 	
 	var result = deck_manager.remove_card_from_deck(card_name)
 	
 	assert_that(result).is_equal(true)
 	assert_that(deck_manager.discard_pile.size()).is_equal(initial_discard_size - 1)
+	
+	# 验证正确的卡被移除了
+	var card_still_exists = false
+	for card in deck_manager.discard_pile:
+		if card.name == card_name:
+			card_still_exists = true
+			break
+	assert_that(card_still_exists).is_equal(false)
 
 func test_remove_nonexistent_card():
 	deck_manager.initialize_default_deck()
